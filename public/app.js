@@ -78,7 +78,7 @@ card.addEventListener('mouseleave', scheduleHide);
 document.querySelector('#close-card').addEventListener('click', () => { hide(); active?.focus(); hide(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape') hide(); });
 window.addEventListener('resize', hide);
-window.addEventListener('scroll', () => { if (active && !card.hidden) placeCard(active); });
+window.addEventListener('scroll', () => { if (active && !card.hidden) placeCard(active); updateSectionHighlight(); }, { passive: true });
 
 function enhance(container) {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
@@ -129,6 +129,75 @@ function copyContent(source, destination) {
 
 const status = document.querySelector('#status');
 const selector = document.querySelector('#message-select');
+const sectionSidebar = document.querySelector('#section-sidebar');
+const sectionList = document.querySelector('#section-list');
+let sections = [];
+
+function clearSections() {
+  sections = [];
+  sectionList.replaceChildren();
+  sectionSidebar.hidden = true;
+}
+
+function updateSectionHighlight() {
+  if (!sections.length) return;
+  let current = sections[0];
+  for (const section of sections) {
+    if (section.heading.getBoundingClientRect().top <= 100) current = section;
+  }
+  for (const section of sections) {
+    if (section === current) section.link.setAttribute('aria-current', 'location');
+    else section.link.removeAttribute('aria-current');
+  }
+}
+
+function buildSections(article) {
+  clearSections();
+  // Most original messages use plain text lines for headings, inside one <p>.
+  const walker = document.createTreeWalker(article, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  const headingPattern = /^\s*(?:[（(][一二三四五六七八九十百零〇○壹贰叁肆伍陆柒捌玖拾\d]+[）)]|[一二三四五六七八九十百壹贰叁肆伍陆柒捌玖拾]+[、．.])\s*\S.{0,100}$/u;
+  for (const node of nodes) {
+    if (node.parentElement.closest('h1,h2,h3,h4,a,button')) continue;
+    const lines = node.textContent.split(/(\r\n|\n|\r)/);
+    if (!lines.some(line => headingPattern.test(line))) continue;
+    const fragment = document.createDocumentFragment();
+    for (const line of lines) {
+      if (headingPattern.test(line)) {
+        const heading = document.createElement('span');
+        heading.className = 'section-heading';
+        heading.textContent = line;
+        fragment.append(heading);
+      } else fragment.append(document.createTextNode(line));
+    }
+    node.replaceWith(fragment);
+  }
+  for (const [index, heading] of [...article.querySelectorAll('.section-heading,h1,h2,h3,h4')].entries()) {
+    if (!heading.textContent.trim()) continue;
+    heading.id = `section-${index + 1}`;
+    heading.classList.add('section-heading');
+    heading.tabIndex = -1;
+    const link = document.createElement('a');
+    link.href = `#${heading.id}`;
+    link.textContent = heading.textContent.trim();
+    link.addEventListener('click', event => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
+      event.preventDefault();
+      hide();
+      history.replaceState(null, '', link.href);
+      heading.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+      heading.focus({ preventScroll: true });
+    });
+    const item = document.createElement('li');
+    item.append(link);
+    sectionList.append(item);
+    sections.push({ heading, link });
+  }
+  sectionSidebar.hidden = !sections.length;
+  updateSectionHighlight();
+}
+
 let messages = [];
 let articleRequest;
 let loadSequence = 0;
@@ -156,6 +225,7 @@ async function loadArticle(number) {
   articleRequest = new AbortController();
   const current = ++loadSequence;
   hide();
+  clearSections();
   const article = document.querySelector('#article');
   article.replaceChildren();
   document.querySelector('#example').hidden = true;
@@ -174,11 +244,14 @@ async function loadArticle(number) {
     const body = source.querySelector('.ls-text, article, main');
     if (!body?.textContent.trim()) throw new Error('来源页面没有可读取的文章内容。');
     copyContent(body, article);
+    buildSections(article);
     enhance(article);
     const title = source.querySelector('.msg-title')?.textContent || messages.find(item => item.number === number).title;
     status.textContent = title;
     document.title = `${title} · 生命读经`;
     document.querySelector('#bottom-nav').hidden = false;
+    const target = sections.find(section => `#${section.heading.id}` === location.hash);
+    if (target) target.heading.scrollIntoView({ block: 'start' });
   } catch (error) {
     if (current !== loadSequence || error.name === 'AbortError') return;
     status.textContent = `原文暂时无法载入：${error.message}。请选择其他篇目或刷新重试。`;
@@ -213,6 +286,7 @@ function loadSelectedMessage() {
     articleRequest?.abort();
     loadSequence++;
     hide();
+    clearSections();
     document.querySelector('#article').replaceChildren();
     document.querySelector('#bottom-nav').hidden = true;
     selector.value = '';
