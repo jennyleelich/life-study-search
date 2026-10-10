@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>生命读经 · 经文伴读</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header><a class="brand" href="/">生命读经 <span>经文伴读</span></a><a href="https://simplified.lsmchinese.org/lifestudy/ot/gen004.html" target="_blank" rel="noopener noreferrer">阅读原文 ↗</a></header>
+  <main>
+    <div class="eyebrow">旧约 · 创世记生命读经</div>
+    <h1>在读经中，遇见经文。</h1>
+    <p class="intro">将鼠标移到经文出处上，查看圣经恢复本。点击出处，在新标签页查看查询结果。</p>
+    <div id="status" role="status">正在载入第四篇…</div>
+    <article id="article" aria-label="生命读经内容"></article>
+    <section id="example" hidden>
+      <p class="example-label">交互示例 · 原文尚未载入</p>
+      <p id="example-text">人类堕落后，在挪亚的时代里，地再度被死水淹埋。（创七17～24。）</p>
+    </section>
+  </main>
+  <aside id="verse-card" role="dialog" aria-label="经文预览" hidden>
+    <div class="card-heading"><strong id="verse-title"></strong><button id="close-card" type="button" aria-label="关闭经文预览">×</button></div>
+    <div id="verse-content" aria-live="polite"></div>
+    <a id="verse-search" target="_blank" rel="noopener noreferrer" hidden>在恢复本网站查看查询结果 ↗</a>
+  </aside>
+  <footer>经文来源：<a href="https://recoveryversion.com.tw/" target="_blank" rel="noopener noreferrer">圣经恢复本</a></footer>
+</body>
+</html>
