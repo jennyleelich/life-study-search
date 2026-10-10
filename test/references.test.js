@@ -66,3 +66,15 @@ test('links fullwidth hyphen ranges and all following verse citations', () => {
   assert.equal(decodeURIComponent(recoverySearchUrl(references[2])), 'https://www.recoveryversion.com.tw/ref/利二十三15～16');
   assert.equal(findReferences('利二三5－6')[0].endVerse, 6);
 });
+
+test('recognizes lowercase l typos while preserving the original citation text', () => {
+  const text = '（创一l8上。)';
+  const reference = findReferences(text)[0];
+  assert.deepEqual(reference, { text: '创一l8', index: 1, book: 'Genesis', chapter: 1, startVerse: 18, endVerse: 18 });
+  assert.equal(decodeURIComponent(recoverySearchUrl(reference)), 'https://www.recoveryversion.com.tw/ref/創一18');
+  const rangeText = '创一l8－l9上，l7。';
+  const references = findReferences(rangeText);
+  assert.deepEqual(references.map(r => [r.text, r.startVerse, r.endVerse]), [['创一l8－l9', 18, 19], ['l7', 17, 17]]);
+  for (const ref of references) assert.equal(rangeText.slice(ref.index, ref.index + ref.text.length), ref.text);
+  assert.deepEqual(findReferences('普通文字 l8 library'), []);
+});

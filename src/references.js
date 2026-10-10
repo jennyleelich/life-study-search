@@ -53,14 +53,17 @@ const pattern = `(${names})([零〇○一二三四五六七八九十百]+|\\d+:)
 
 export function findReferences(text) {
   const results = [];
-  for (const match of text.matchAll(new RegExp(pattern, 'gu'))) {
+  // Some source citations contain a lowercase l in place of 1 (e.g. 创一l8).
+  // Normalize only for matching; equal-length substitution preserves text offsets.
+  const matchingText = text.replace(/l(?=\d)/g, '1');
+  for (const match of matchingText.matchAll(new RegExp(pattern, 'gu'))) {
     const chapter = chineseNumber(match[2].replace(':', ''));
     const startVerse = Number(match[3]);
     const endVerse = Number(match[4] || match[3]);
     if (chapter < 1 || startVerse < 1 || endVerse < startVerse) continue;
-    results.push({ text: match[0], index: match.index, book: aliases.get(match[1]),
+    results.push({ text: text.slice(match.index, match.index + match[0].length), index: match.index, book: aliases.get(match[1]),
       chapter, startVerse, endVerse });
-    const remainder = text.slice(match.index + match[0].length);
+    const remainder = matchingText.slice(match.index + match[0].length);
     // A following citation may omit its book, or both its book and chapter.
     // 上/中/下 describe part of the preceding verse and remain ordinary text.
     const continuation = /^(?:[上中下]?[，、,]\s*(?:[零〇○一二三四五六七八九十百]+|\d+:)?\d+(?:[～~－—–-]\d+)?)+/u.exec(remainder);
@@ -70,8 +73,9 @@ export function findReferences(text) {
         if (extra[2]) inheritedChapter = chineseNumber(extra[2].replace(':', ''));
         const first = Number(extra[3]);
         const last = Number(extra[4] || extra[3]);
-        if (inheritedChapter > 0 && first > 0 && last >= first) results.push({ text: extra[1],
-          index: match.index + match[0].length + extra.index + extra[0].length - extra[1].length,
+        const index = match.index + match[0].length + extra.index + extra[0].length - extra[1].length;
+        if (inheritedChapter > 0 && first > 0 && last >= first) results.push({ text: text.slice(index, index + extra[1].length),
+          index,
           book: aliases.get(match[1]), chapter: inheritedChapter, startVerse: first, endVerse: last });
       }
     }
