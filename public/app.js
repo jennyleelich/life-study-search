@@ -130,6 +130,7 @@ function copyContent(source, destination) {
 
 const status = document.querySelector('#status');
 const catalog = document.querySelector('#message-catalog');
+const selector = document.querySelector('#message-select');
 const sectionSidebar = document.querySelector('#section-sidebar');
 const sectionList = document.querySelector('#section-list');
 let sections = [];
@@ -217,6 +218,7 @@ let loadSequence = 0;
 
 function messageUrl(number) { return `/?message=${number}`; }
 function updateNavigation(number) {
+  selector.value = String(number);
   const index = messages.findIndex(item => item.number === number);
   for (const [id, item] of [['previous', messages[index - 1]], ['next', messages[index + 1]]]) {
     const link = document.querySelector(`#${id}`);
@@ -280,6 +282,7 @@ function navigate(number) {
   window.scrollTo(0, 0);
   loadArticle(number);
 }
+selector.addEventListener('change', () => navigate(Number(selector.value)));
 function showIndex() {
   articleRequest?.abort();
   loadSequence++;
@@ -349,6 +352,13 @@ try {
   const response = await fetch('/api/messages');
   if (!response.ok) throw new Error('目录载入失败');
   messages = await response.json();
+  selector.replaceChildren(...messages.map(item => {
+    const option = document.createElement('option');
+    option.value = item.number;
+    option.textContent = item.title;
+    return option;
+  }));
+  selector.disabled = false;
   document.querySelector('#message-list').replaceChildren(...messages.map(item => {
     const entry = document.createElement('li');
     const link = document.createElement('a');

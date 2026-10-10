@@ -17,7 +17,11 @@
     <div class="eyebrow">旧约 · 创世记生命读经</div>
     <nav class="message-nav" aria-label="篇目导航">
       <a id="previous" aria-disabled="true">← 上一篇</a>
-      <a id="message-index" href="/">选择篇目</a>
+      <div class="message-picker">
+        <label for="message-select">选择篇目</label>
+        <select id="message-select" disabled><option>正在载入篇目…</option></select>
+        <a id="message-index" href="/">全部篇目索引</a>
+      </div>
       <a id="next" aria-disabled="true">下一篇 →</a>
     </nav>
     <h1 id="status" aria-live="polite">正在载入第四篇…</h1>
