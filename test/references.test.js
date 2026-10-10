@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chineseNumber, findReferences } from '../src/references.js';
+import { chineseNumber, findReferences, recoverySearchUrl } from '../src/references.js';
 
 test('extracts the requested citation and its exact location in prose', () => {
   const text = '人类堕落后，在挪亚的时代里，地再度被死水淹埋。（创七17～24。）';
@@ -19,4 +19,16 @@ test('parses chapters up to Psalms 150 and ignores invalid ranges', () => {
   assert.equal(chineseNumber('一百零五'), 105);
   assert.equal(chineseNumber('十一'), 11);
   assert.deepEqual(findReferences('创零1 创七0 创七24～17 普通文字'), []);
+});
+
+test('parses digit-by-digit chapters without dropping leading digits', () => {
+  for (const [text, expected] of [['二一', 21], ['二十一', 21], ['一二', 12], ['一五○', 150], ['一〇五', 105], ['一零五', 105]]) {
+    assert.equal(chineseNumber(text), expected);
+  }
+  const reference = findReferences('（启二一25。）')[0];
+  assert.equal(reference.chapter, 21);
+  assert.equal(reference.startVerse, 25);
+  assert.equal(decodeURIComponent(recoverySearchUrl(reference)), 'https://www.recoveryversion.com.tw/ref/啟二十一25');
+  assert.equal(findReferences('启二一5')[0].startVerse, 5);
+  assert.equal(findReferences('诗一○五1')[0].chapter, 105);
 });

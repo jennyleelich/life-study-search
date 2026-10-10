@@ -28,10 +28,14 @@ export const BOOKS = [
 
 const aliases = new Map(BOOKS.flatMap(([simple, traditional, book]) =>
   [[simple, book], [traditional, book]]));
-const digits = { 零: 0, 〇: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+const digits = { 零: 0, 〇: 0, '○': 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
 
 export function chineseNumber(text) {
   if (/^\d+$/.test(text)) return Number(text);
+  // Life-study citations also spell chapters digit by digit: 二一 = 21, 一○五 = 105.
+  if (text && [...text].every(character => character in digits)) {
+    return Number([...text].map(character => digits[character]).join(''));
+  }
   let total = 0;
   let digit = 0;
   for (const character of text) {
@@ -45,7 +49,7 @@ export function chineseNumber(text) {
 }
 
 const names = [...aliases.keys()].sort((a, b) => b.length - a.length).join('|');
-const pattern = `(${names})([零〇一二三四五六七八九十百]+|\\d+:)(\\d+)(?:[～~—–-](\\d+))?`;
+const pattern = `(${names})([零〇○一二三四五六七八九十百]+|\\d+:)(\\d+)(?:[～~—–-](\\d+))?`;
 
 export function findReferences(text) {
   const results = [];
