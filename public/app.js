@@ -1,4 +1,5 @@
 import { findReferences, recoverySearchUrl } from '/references.js';
+import { headingLevel } from '/headings.js';
 
 const card = document.querySelector('#verse-card');
 const content = document.querySelector('#verse-content');
@@ -157,22 +158,23 @@ function buildSections(article) {
   const walker = document.createTreeWalker(article, NodeFilter.SHOW_TEXT);
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
-  const headingPattern = /^\s*(?:[（(][一二三四五六七八九十百零〇○壹贰叁肆伍陆柒捌玖拾\d]+[）)]|[一二三四五六七八九十百壹贰叁肆伍陆柒捌玖拾]+[、．.])\s*\S.{0,100}$/u;
   for (const node of nodes) {
     if (node.parentElement.closest('h1,h2,h3,h4,a,button')) continue;
     const lines = node.textContent.split(/(\r\n|\n|\r)/);
-    if (!lines.some(line => headingPattern.test(line))) continue;
+    if (!lines.some(line => headingLevel(line) !== null)) continue;
     const fragment = document.createDocumentFragment();
     for (const line of lines) {
-      if (headingPattern.test(line)) {
+      if (headingLevel(line) !== null) {
         const heading = document.createElement('span');
         heading.className = 'section-heading';
+        heading.dataset.level = headingLevel(line);
         heading.textContent = line;
         fragment.append(heading);
       } else fragment.append(document.createTextNode(line));
     }
     node.replaceWith(fragment);
   }
+  const parents = [];
   for (const [index, heading] of [...article.querySelectorAll('.section-heading,h1,h2,h3,h4')].entries()) {
     if (!heading.textContent.trim()) continue;
     heading.id = `section-${index + 1}`;
@@ -191,7 +193,18 @@ function buildSections(article) {
     });
     const item = document.createElement('li');
     item.append(link);
-    sectionList.append(item);
+    const level = heading.dataset.level !== undefined ? Number(heading.dataset.level)
+      : headingLevel(heading.textContent) ?? Number(heading.tagName.slice(1)) - 1;
+    item.dataset.level = level;
+    while (parents.length && parents.at(-1).level >= level) parents.pop();
+    let list = sectionList;
+    if (parents.length) {
+      const parent = parents.at(-1).item;
+      list = parent.querySelector(':scope > ol');
+      if (!list) { list = document.createElement('ol'); parent.append(list); }
+    }
+    list.append(item);
+    parents.push({ level, item });
     sections.push({ heading, link });
   }
   sectionSidebar.hidden = !sections.length;

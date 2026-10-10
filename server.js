@@ -13,6 +13,7 @@ const files = new Map([
   ['/app.js', ['public/app.js', 'text/javascript; charset=utf-8']],
   ['/style.css', ['public/style.css', 'text/css; charset=utf-8']],
   ['/references.js', ['src/references.js', 'text/javascript; charset=utf-8']],
+  ['/headings.js', ['src/headings.js', 'text/javascript; charset=utf-8']],
 ]);
 
 export function createServer({ fetchArticle = async (message) => {
