@@ -14,7 +14,8 @@
     <nav aria-label="本篇目录"><h2>本篇目录</h2><ol id="section-list"></ol></nav>
   </aside>
   <main>
-    <div class="eyebrow">旧约 · 创世记生命读经</div>
+    <div class="eyebrow" id="book-label">生命读经</div>
+    <div class="book-picker"><label for="book-select">选择书卷</label><select id="book-select" disabled><option>正在载入书卷…</option></select></div>
     <nav class="message-nav" aria-label="篇目导航">
       <a id="previous" aria-disabled="true">← 上一篇</a>
       <div class="message-picker">
@@ -24,8 +25,8 @@
       </div>
       <a id="next" aria-disabled="true">下一篇 →</a>
     </nav>
-    <h1 id="status" aria-live="polite">正在载入第四篇…</h1>
-    <nav id="message-catalog" aria-label="全部篇目索引" hidden><p>共 120 篇，点击篇目开始阅读。</p><ol id="message-list"></ol></nav>
+    <h1 id="status" aria-live="polite">正在载入书卷目录…</h1>
+    <nav id="message-catalog" aria-label="全部篇目索引" hidden><p id="catalog-description"></p><ol id="message-list"></ol></nav>
     <article id="article" aria-label="生命读经内容"></article>
     <nav id="bottom-nav" class="bottom-nav" aria-label="继续阅读" hidden></nav>
     <section id="example" hidden>

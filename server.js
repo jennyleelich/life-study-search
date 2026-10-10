@@ -6,7 +6,7 @@ import { lookupVerses as recoveryLookup } from './src/recovery.js';
 import { BOOKS } from './src/references.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const messages = JSON.parse(await readFile(new URL('./src/genesis.json', import.meta.url), 'utf8'));
+const books = JSON.parse(await readFile(new URL('./src/books.json', import.meta.url), 'utf8'));
 const articleCache = new Map();
 const files = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
@@ -16,9 +16,9 @@ const files = new Map([
   ['/headings.js', ['src/headings.js', 'text/javascript; charset=utf-8']],
 ]);
 
-export function createServer({ fetchArticle = async (message) => {
-  if (articleCache.has(message)) return articleCache.get(message);
-  const source = `https://simplified.lsmchinese.org/lifestudy/ot/gen${String(message).padStart(3, '0')}.html`;
+export function createServer({ fetchArticle = async (message, bookId, source) => {
+  const cacheKey = `${bookId}:${message}`;
+  if (articleCache.has(cacheKey)) return articleCache.get(cacheKey);
   const response = await fetch(source, { signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`Life-study website returned HTTP ${response.status}.`);
   const bytes = await response.arrayBuffer();
@@ -27,7 +27,8 @@ export function createServer({ fetchArticle = async (message) => {
   const charset = /charset\s*=\s*["']?([\w-]+)/i.exec(contentType)?.[1]
     || /charset\s*=\s*["']?([\w-]+)/i.exec(prefix)?.[1] || 'utf-8';
   const result = { html: new TextDecoder(charset).decode(bytes), source };
-  articleCache.set(message, result);
+  if (articleCache.size >= 50) articleCache.delete(articleCache.keys().next().value);
+  articleCache.set(cacheKey, result);
   return result;
 }, lookupVerses = recoveryLookup } = {}) {
   return http.createServer(async (request, response) => {
@@ -38,14 +39,19 @@ export function createServer({ fetchArticle = async (message) => {
     };
     if (request.method !== 'GET') return json(405, { error: 'Method not allowed.' });
     try {
-      if (url.pathname === '/api/messages') return json(200, messages);
-      if (url.pathname === '/api/article') {
-        const value = url.searchParams.get('message') ?? '4';
+      if (url.pathname === '/api/books') return json(200, books);
+      if (url.pathname === '/api/messages' || url.pathname === '/api/article') {
+        const bookId = url.searchParams.get('book') ?? 'gen';
+        const book = books.find(item => item.id === bookId);
+        if (!book) return json(400, { error: '书卷不存在，请从书卷列表中选择。' });
+        const messages = book.messages;
+        if (url.pathname === '/api/messages') return json(200, messages);
+        const value = url.searchParams.get('message') ?? (bookId === 'gen' ? '4' : '1');
         const message = Number(value);
         if (!/^\d+$/.test(value) || !messages.some(item => item.number === message)) {
           return json(400, { error: '篇目不存在，请从目录中选择。' });
         }
-        return json(200, await fetchArticle(message));
+        return json(200, await fetchArticle(message, bookId, messages.find(item => item.number === message).source));
       }
       if (url.pathname === '/api/verses') {
         const book = url.searchParams.get('book');

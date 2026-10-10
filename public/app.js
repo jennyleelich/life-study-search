@@ -212,11 +212,15 @@ function buildSections(article) {
   updateSectionHighlight();
 }
 
+let books = [];
+let currentBook;
+const bookSelector = document.querySelector('#book-select');
 let messages = [];
 let articleRequest;
 let loadSequence = 0;
 
-function messageUrl(number) { return `/?message=${number}`; }
+function indexUrl() { return `/?book=${currentBook.id}`; }
+function messageUrl(number) { return `/?book=${currentBook.id}&message=${number}`; }
 function updateNavigation(number) {
   selector.value = String(number);
   const index = messages.findIndex(item => item.number === number);
@@ -251,9 +255,9 @@ async function loadArticle(number) {
   status.textContent = `正在载入第 ${number} 篇…`;
   updateNavigation(number);
   const original = document.querySelector('#original');
-  original.href = `https://simplified.lsmchinese.org/lifestudy/ot/gen${String(number).padStart(3, '0')}.html`;
+  original.href = messages.find(item => item.number === number).source;
   try {
-    const response = await fetch(`/api/article?message=${number}`, { signal: articleRequest.signal });
+    const response = await fetch(`/api/article?book=${currentBook.id}&message=${number}`, { signal: articleRequest.signal });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '原文载入失败。');
     if (current !== loadSequence) return;
@@ -294,9 +298,9 @@ function showIndex() {
   document.querySelector('#bottom-nav').hidden = true;
   document.querySelector('.message-nav').hidden = true;
   document.querySelector('.reader-layout').classList.add('index-view');
-  document.querySelector('#original').href = 'https://simplified.lsmchinese.org/lifestudy/ot/gen-idx.html';
-  status.textContent = '创世记生命读经 · 全部篇目';
-  document.title = '创世记生命读经 · 篇目索引';
+  document.querySelector('#original').href = currentBook.indexSource;
+  status.textContent = `${currentBook.name}生命读经 · 全部篇目`;
+  document.title = `${currentBook.name}生命读经 · 篇目索引`;
   catalog.hidden = false;
 }
 
@@ -312,7 +316,7 @@ for (const nav of document.querySelectorAll('.message-nav, .bottom-nav')) {
     if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
     event.preventDefault();
     if (link.id === 'message-index') {
-      history.pushState(null, '', '/');
+      history.pushState(null, '', indexUrl());
       showIndex();
       window.scrollTo(0, 0);
       return;
@@ -326,6 +330,19 @@ function selectedMessage() {
   return /^\d+$/.test(value) && messages.some(item => item.number === number) ? number : null;
 }
 function loadSelectedMessage() {
+  const bookId = new URL(location.href).searchParams.get('book') ?? 'gen';
+  currentBook = books.find(item => item.id === bookId);
+  if (!currentBook) {
+    articleRequest?.abort(); loadSequence++; hide(); clearSections();
+    document.querySelector('#article').replaceChildren();
+    catalog.hidden = true;
+    document.querySelector('.message-nav').hidden = true;
+    document.querySelector('#bottom-nav').hidden = true;
+    status.textContent = '书卷不存在，请从书卷列表中选择。';
+    bookSelector.value = '';
+    return;
+  }
+  updateBook();
   if (!new URL(location.href).searchParams.has('message')) { showIndex(); return; }
   const number = selectedMessage();
   if (number !== null) loadArticle(number);
@@ -347,11 +364,13 @@ function loadSelectedMessage() {
     status.textContent = '篇目不存在，请从目录中选择。';
   }
 }
-window.addEventListener('popstate', loadSelectedMessage);
-try {
-  const response = await fetch('/api/messages');
-  if (!response.ok) throw new Error('目录载入失败');
-  messages = await response.json();
+
+function updateBook() {
+  messages = currentBook.messages;
+  bookSelector.value = currentBook.id;
+  document.querySelector('#book-label').textContent = `${currentBook.testament} · ${currentBook.name}生命读经`;
+  document.querySelector('#message-index').href = indexUrl();
+  document.querySelector('#catalog-description').textContent = `共 ${messages.length} 篇，点击篇目开始阅读。`;
   selector.replaceChildren(...messages.map(item => {
     const option = document.createElement('option');
     option.value = item.number;
@@ -367,6 +386,29 @@ try {
     entry.append(link);
     return entry;
   }));
+}
+bookSelector.addEventListener('change', () => {
+  history.pushState(null, '', `/?book=${bookSelector.value}`);
+  window.scrollTo(0, 0);
+  loadSelectedMessage();
+});
+window.addEventListener('popstate', loadSelectedMessage);
+try {
+  const response = await fetch('/api/books');
+  if (!response.ok) throw new Error('书卷目录载入失败');
+  books = await response.json();
+  bookSelector.replaceChildren(...['旧约', '新约'].map(testament => {
+    const group = document.createElement('optgroup');
+    group.label = `${testament}生命读经`;
+    for (const book of books.filter(item => item.testament === testament)) {
+      const option = document.createElement('option');
+      option.value = book.id;
+      option.textContent = `${book.name}（${book.messages.length}篇）`;
+      group.append(option);
+    }
+    return group;
+  }));
+  bookSelector.disabled = false;
   loadSelectedMessage();
 } catch (error) {
   status.textContent = `目录暂时无法载入：${error.message}。请刷新重试。`;

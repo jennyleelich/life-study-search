@@ -22,6 +22,9 @@ main { min-width: 0; width: 100%; padding: 64px 28px; margin: auto; grid-column:
   #section-list { max-height: 220px; overflow-y: auto; }
 }
 .eyebrow { font-size: 12px; letter-spacing: 3px; color: #7e876d; }
+.book-picker { margin-top: 24px; }
+.book-picker label { display: block; margin-bottom: 6px; font-size: 12px; color: #748074; }
+.book-picker select { width: 100%; padding: 10px; border: 1px solid #cdd6c5; border-radius: 5px; color: #283c36; background: #fffef9; font: inherit; }
 h1 { font-family: serif; font-size: clamp(28px, 5vw, 44px); font-weight: 500; }
 #status { margin: 35px 0 28px; font-family: serif; font-size: clamp(25px, 3vw, 34px); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
 article, #example { font-family: serif; font-size: 19px; line-height: 2.1; }

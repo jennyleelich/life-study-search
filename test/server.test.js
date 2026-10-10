@@ -31,6 +31,25 @@ test('lists all Genesis messages and validates article selection', async t => {
   }
 });
 
+test('provides all book catalogs and uses actual source filenames for selected books', async t => {
+  const base = await runServer(t, { fetchArticle: async (number, book, source) => ({ number, book, source }) });
+  const books = await (await fetch(`${base}/api/books`)).json();
+  assert.equal(books.length, 63);
+  assert.equal(books.reduce((count, book) => count + book.messages.length, 0), 1983);
+  assert.equal(new Set(books.map(book => book.id)).size, books.length);
+  for (const book of books) {
+    assert.deepEqual(book.messages.map(item => item.number), Array.from({ length: book.messages.length }, (_, i) => i + 1));
+    assert.ok(book.messages.every(item => item.source.startsWith('https://simplified.lsmchinese.org/lifestudy/')));
+    const last = book.messages.at(-1);
+    const result = await (await fetch(`${base}/api/article?book=${book.id}&message=${last.number}`)).json();
+    assert.deepEqual(result, { number: last.number, book: book.id, source: last.source });
+  }
+  const matthew = await (await fetch(`${base}/api/article?book=matt&message=1`)).json();
+  assert.equal(matthew.source, 'https://simplified.lsmchinese.org/lifestudy/matt01.html');
+  assert.equal((await fetch(`${base}/api/messages?book=not-a-book`)).status, 400);
+  assert.equal((await fetch(`${base}/api/article?book=oba&message=2`)).status, 400);
+});
+
 test('passes normalized references to a provider and rejects invalid ranges', async t => {
   const base = await runServer(t, { lookupVerses: async reference => ({ reference,
     verses: [{ number: 17, text: 'Test fixture only' }], searchUrl: 'https://recoveryversion.com.tw/' }) });
