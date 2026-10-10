@@ -129,7 +129,7 @@ function copyContent(source, destination) {
 }
 
 const status = document.querySelector('#status');
-const selector = document.querySelector('#message-select');
+const catalog = document.querySelector('#message-catalog');
 const sectionSidebar = document.querySelector('#section-sidebar');
 const sectionList = document.querySelector('#section-list');
 let sections = [];
@@ -218,7 +218,6 @@ let loadSequence = 0;
 function messageUrl(number) { return `/?message=${number}`; }
 function updateNavigation(number) {
   const index = messages.findIndex(item => item.number === number);
-  selector.value = String(number);
   for (const [id, item] of [['previous', messages[index - 1]], ['next', messages[index + 1]]]) {
     const link = document.querySelector(`#${id}`);
     link.setAttribute('aria-disabled', String(!item));
@@ -239,6 +238,9 @@ async function loadArticle(number) {
   const current = ++loadSequence;
   hide();
   clearSections();
+  catalog.hidden = true;
+  document.querySelector('.reader-layout').classList.remove('index-view');
+  document.querySelector('.message-nav').hidden = false;
   const article = document.querySelector('#article');
   article.replaceChildren();
   document.querySelector('#example').hidden = true;
@@ -278,12 +280,40 @@ function navigate(number) {
   window.scrollTo(0, 0);
   loadArticle(number);
 }
-selector.addEventListener('change', () => navigate(Number(selector.value)));
+function showIndex() {
+  articleRequest?.abort();
+  loadSequence++;
+  hide();
+  clearSections();
+  const article = document.querySelector('#article');
+  article.replaceChildren();
+  article.removeAttribute('aria-busy');
+  document.querySelector('#bottom-nav').hidden = true;
+  document.querySelector('.message-nav').hidden = true;
+  document.querySelector('.reader-layout').classList.add('index-view');
+  document.querySelector('#original').href = 'https://simplified.lsmchinese.org/lifestudy/ot/gen-idx.html';
+  status.textContent = '创世记生命读经 · 全部篇目';
+  document.title = '创世记生命读经 · 篇目索引';
+  catalog.hidden = false;
+}
+
+catalog.addEventListener('click', event => {
+  const link = event.target.closest('a[href]');
+  if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
+  event.preventDefault();
+  navigate(Number(new URL(link.href).searchParams.get('message')));
+});
 for (const nav of document.querySelectorAll('.message-nav, .bottom-nav')) {
   nav.addEventListener('click', event => {
     const link = event.target.closest('a[href]');
     if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
     event.preventDefault();
+    if (link.id === 'message-index') {
+      history.pushState(null, '', '/');
+      showIndex();
+      window.scrollTo(0, 0);
+      return;
+    }
     navigate(Number(new URL(link.href).searchParams.get('message')));
   });
 }
@@ -293,6 +323,7 @@ function selectedMessage() {
   return /^\d+$/.test(value) && messages.some(item => item.number === number) ? number : null;
 }
 function loadSelectedMessage() {
+  if (!new URL(location.href).searchParams.has('message')) { showIndex(); return; }
   const number = selectedMessage();
   if (number !== null) loadArticle(number);
   else {
@@ -300,9 +331,11 @@ function loadSelectedMessage() {
     loadSequence++;
     hide();
     clearSections();
+    catalog.hidden = true;
+    document.querySelector('.reader-layout').classList.remove('index-view');
+    document.querySelector('.message-nav').hidden = false;
     document.querySelector('#article').replaceChildren();
     document.querySelector('#bottom-nav').hidden = true;
-    selector.value = '';
     for (const id of ['previous', 'next']) {
       const link = document.querySelector(`#${id}`);
       link.removeAttribute('href');
@@ -316,13 +349,14 @@ try {
   const response = await fetch('/api/messages');
   if (!response.ok) throw new Error('目录载入失败');
   messages = await response.json();
-  selector.replaceChildren(...messages.map(item => {
-    const option = document.createElement('option');
-    option.value = item.number;
-    option.textContent = item.title;
-    return option;
+  document.querySelector('#message-list').replaceChildren(...messages.map(item => {
+    const entry = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = messageUrl(item.number);
+    link.textContent = item.title;
+    entry.append(link);
+    return entry;
   }));
-  selector.disabled = false;
   loadSelectedMessage();
 } catch (error) {
   status.textContent = `目录暂时无法载入：${error.message}。请刷新重试。`;

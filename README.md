@@ -12,7 +12,7 @@ The server listens on port 3000 (`PORT` can override it). `npm start` enables No
 
 ## Sources and behavior
 
-Allow `simplified.lsmchinese.org`, `recoveryversion.com.tw`, and `www.recoveryversion.com.tw` in restricted cloud networking. No API key is needed. All 120 Genesis Life-study messages are available through the message selector and previous/next links. The catalog in `src/genesis.json` preserves titles from the source site's `gen-idx.html`. The default remains message four; `/?message=1` through `/?message=120` are bookmarkable. Browser back/forward restores the selected message. Articles are fetched on demand and cached in server memory; source paragraph breaks are preserved.
+Allow `simplified.lsmchinese.org`, `recoveryversion.com.tw`, and `www.recoveryversion.com.tw` in restricted cloud networking. No API key is needed. All 120 Genesis Life-study messages are listed on the home page. Click a title to read, or use previous/next links within a message. The “选择篇目” link returns to the full index. The catalog in `src/genesis.json` preserves titles from the source site's `gen-idx.html`. The home page opens the full index; `/?message=1` through `/?message=120` are bookmarkable. Browser back/forward restores the selected message. Articles are fetched on demand and cached in server memory; source paragraph breaks are preserved.
 
 The current message's section headings appear in a sticky left-hand navigation on desktop, or above the reader on smaller screens. Click a heading to jump to its original location; the current section is highlighted during scrolling. Heading anchors can be bookmarked together with the message URL. The navigation refreshes when changing messages and is hidden when no headings are detected.
 
