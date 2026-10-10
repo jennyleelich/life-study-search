@@ -32,3 +32,20 @@ test('parses digit-by-digit chapters without dropping leading digits', () => {
   assert.equal(findReferences('启二一5')[0].startVerse, 5);
   assert.equal(findReferences('诗一○五1')[0].chapter, 105);
 });
+
+test('inherits omitted books and updates the chapter for subsequent citations', () => {
+  const text = '（启二一25下，二二5，7～9，二十一6上，22:10。）';
+  const references = findReferences(text);
+  assert.deepEqual(references.map(r => [r.text, r.book, r.chapter, r.startVerse, r.endVerse]), [
+    ['启二一25', 'Revelation', 21, 25, 25],
+    ['二二5', 'Revelation', 22, 5, 5],
+    ['7～9', 'Revelation', 22, 7, 9],
+    ['二十一6', 'Revelation', 21, 6, 6],
+    ['22:10', 'Revelation', 22, 10, 10],
+  ]);
+  for (const reference of references) {
+    assert.equal(text.slice(reference.index, reference.index + reference.text.length), reference.text);
+  }
+  assert.equal(decodeURIComponent(recoverySearchUrl(references[1])), 'https://www.recoveryversion.com.tw/ref/啟二十二5');
+  assert.equal(findReferences('启二一25下。二二5。').length, 1);
+});

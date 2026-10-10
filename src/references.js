@@ -61,13 +61,18 @@ export function findReferences(text) {
     results.push({ text: match[0], index: match.index, book: aliases.get(match[1]),
       chapter, startVerse, endVerse });
     const remainder = text.slice(match.index + match[0].length);
-    const continuation = /^(?:[，、,]\s*\d+(?:[～~—–-]\d+)?)+/u.exec(remainder);
+    // A following citation may omit its book, or both its book and chapter.
+    // 上/中/下 describe part of the preceding verse and remain ordinary text.
+    const continuation = /^(?:[上中下]?[，、,]\s*(?:[零〇○一二三四五六七八九十百]+|\d+:)?\d+(?:[～~—–-]\d+)?)+/u.exec(remainder);
     if (continuation) {
-      for (const extra of continuation[0].matchAll(/\d+(?:[～~—–-]\d+)?/gu)) {
-        const [first, last = first] = extra[0].split(/[～~—–-]/u).map(Number);
-        if (first > 0 && last >= first) results.push({ text: extra[0],
-          index: match.index + match[0].length + extra.index, book: aliases.get(match[1]),
-          chapter, startVerse: first, endVerse: last });
+      let inheritedChapter = chapter;
+      for (const extra of continuation[0].matchAll(/[上中下]?[，、,]\s*(([零〇○一二三四五六七八九十百]+|\d+:)?(\d+)(?:[～~—–-](\d+))?)/gu)) {
+        if (extra[2]) inheritedChapter = chineseNumber(extra[2].replace(':', ''));
+        const first = Number(extra[3]);
+        const last = Number(extra[4] || extra[3]);
+        if (inheritedChapter > 0 && first > 0 && last >= first) results.push({ text: extra[1],
+          index: match.index + match[0].length + extra.index + extra[0].length - extra[1].length,
+          book: aliases.get(match[1]), chapter: inheritedChapter, startVerse: first, endVerse: last });
       }
     }
   }
