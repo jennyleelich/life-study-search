@@ -18,6 +18,19 @@ test('serves the page and article through the same origin', async t => {
   assert.equal((await fetch(`${base}/server.js`)).status, 404);
 });
 
+test('lists all Genesis messages and validates article selection', async t => {
+  const base = await runServer(t, { fetchArticle: async number => ({ number }) });
+  const messages = await (await fetch(`${base}/api/messages`)).json();
+  assert.equal(messages.length, 120);
+  assert.deepEqual(messages.map(item => item.number), Array.from({ length: 120 }, (_, index) => index + 1));
+  for (const number of [1, 4, 120]) {
+    assert.deepEqual(await (await fetch(`${base}/api/article?message=${number}`)).json(), { number });
+  }
+  for (const value of ['0', '121', '../gen001', '1.5', '']) {
+    assert.equal((await fetch(`${base}/api/article?message=${encodeURIComponent(value)}`)).status, 400);
+  }
+});
+
 test('passes normalized references to a provider and rejects invalid ranges', async t => {
   const base = await runServer(t, { lookupVerses: async reference => ({ reference,
     verses: [{ number: 17, text: 'Test fixture only' }], searchUrl: 'https://recoveryversion.com.tw/' }) });

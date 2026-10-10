@@ -8,13 +8,19 @@
   <script type="module" src="/app.js"></script>
 </head>
 <body>
-  <header><a class="brand" href="/">生命读经 <span>经文伴读</span></a><a href="https://simplified.lsmchinese.org/lifestudy/ot/gen004.html" target="_blank" rel="noopener noreferrer">阅读原文 ↗</a></header>
+  <header><a class="brand" href="/">生命读经 <span>经文伴读</span></a><a id="original" href="https://simplified.lsmchinese.org/lifestudy/ot/gen004.html" target="_blank" rel="noopener noreferrer">阅读原文 ↗</a></header>
   <main>
     <div class="eyebrow">旧约 · 创世记生命读经</div>
     <h1>在读经中，遇见经文。</h1>
     <p class="intro">将鼠标移到经文出处上，查看圣经恢复本。点击出处，在新标签页查看查询结果。</p>
+    <nav class="message-nav" aria-label="篇目导航">
+      <a id="previous" aria-disabled="true">← 上一篇</a>
+      <div class="message-picker"><label for="message-select">选择篇目</label><select id="message-select" disabled><option>正在载入目录…</option></select></div>
+      <a id="next" aria-disabled="true">下一篇 →</a>
+    </nav>
     <div id="status" role="status">正在载入第四篇…</div>
     <article id="article" aria-label="生命读经内容"></article>
+    <nav id="bottom-nav" class="bottom-nav" aria-label="继续阅读" hidden></nav>
     <section id="example" hidden>
       <p class="example-label">交互示例 · 原文尚未载入</p>
       <p id="example-text">人类堕落后，在挪亚的时代里，地再度被死水淹埋。（创七17～24。）</p>

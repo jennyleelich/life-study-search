@@ -12,7 +12,7 @@ The server listens on port 3000 (`PORT` can override it). `npm start` enables No
 
 ## Sources and behavior
 
-Allow `simplified.lsmchinese.org`, `recoveryversion.com.tw`, and `www.recoveryversion.com.tw` in restricted cloud networking. No API key is needed. The source reader currently targets Genesis Life-study message four, as requested.
+Allow `simplified.lsmchinese.org`, `recoveryversion.com.tw`, and `www.recoveryversion.com.tw` in restricted cloud networking. No API key is needed. All 120 Genesis Life-study messages are available through the message selector and previous/next links. The catalog in `src/genesis.json` preserves titles from the source site's `gen-idx.html`. The default remains message four; `/?message=1` through `/?message=120` are bookmarkable. Browser back/forward restores the selected message. Articles are fetched on demand and cached in server memory; source paragraph breaks are preserved.
 
 The provider uses the source site's own `GET /api/getVerses?VERSION=2&refs=1.7.17,...` API. VERSION 2 supplies simplified Chinese. The `/ref/創七17～24` route displays the corresponding verse results on the source site. Book numbers follow its 66-book order. Multiple units belonging to one verse are joined in order. Missing or incomplete verses produce an explicit error. Successful queries are cached in memory; errors are not cached. Remote service outages remain possible.
 

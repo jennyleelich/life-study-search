@@ -127,19 +127,116 @@ function copyContent(source, destination) {
   }
 }
 
-try {
-  const response = await fetch('/api/article');
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || '原文载入失败。');
-  const source = new DOMParser().parseFromString(data.html, 'text/html');
-  const body = source.querySelector('.ls-text, article, main') || source.body;
+const status = document.querySelector('#status');
+const selector = document.querySelector('#message-select');
+let messages = [];
+let articleRequest;
+let loadSequence = 0;
+
+function messageUrl(number) { return `/?message=${number}`; }
+function updateNavigation(number) {
+  const index = messages.findIndex(item => item.number === number);
+  selector.value = String(number);
+  for (const [id, item] of [['previous', messages[index - 1]], ['next', messages[index + 1]]]) {
+    const link = document.querySelector(`#${id}`);
+    link.setAttribute('aria-disabled', String(!item));
+    if (item) { link.href = messageUrl(item.number); link.title = item.title; }
+    else { link.removeAttribute('href'); link.removeAttribute('title'); }
+  }
+  const bottom = document.querySelector('#bottom-nav');
+  bottom.replaceChildren(...['previous', 'next'].map(id => {
+    const link = document.querySelector(`#${id}`).cloneNode(true);
+    link.removeAttribute('id');
+    return link;
+  }));
+}
+
+async function loadArticle(number) {
+  articleRequest?.abort();
+  articleRequest = new AbortController();
+  const current = ++loadSequence;
+  hide();
   const article = document.querySelector('#article');
-  copyContent(body, article);
-  if (!article.textContent.trim()) throw new Error('来源页面没有可读取的内容。');
-  enhance(article);
-  document.querySelector('#status').textContent = source.querySelector('.msg-title')?.textContent || '原文已载入。悬停出处查看经文，点击打开查询结果。';
+  article.replaceChildren();
+  document.querySelector('#example').hidden = true;
+  document.querySelector('#bottom-nav').hidden = true;
+  article.setAttribute('aria-busy', 'true');
+  status.textContent = `正在载入第 ${number} 篇…`;
+  updateNavigation(number);
+  const original = document.querySelector('#original');
+  original.href = `https://simplified.lsmchinese.org/lifestudy/ot/gen${String(number).padStart(3, '0')}.html`;
+  try {
+    const response = await fetch(`/api/article?message=${number}`, { signal: articleRequest.signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '原文载入失败。');
+    if (current !== loadSequence) return;
+    const source = new DOMParser().parseFromString(data.html, 'text/html');
+    const body = source.querySelector('.ls-text, article, main');
+    if (!body?.textContent.trim()) throw new Error('来源页面没有可读取的文章内容。');
+    copyContent(body, article);
+    enhance(article);
+    const title = source.querySelector('.msg-title')?.textContent || messages.find(item => item.number === number).title;
+    status.textContent = title;
+    document.title = `${title} · 生命读经`;
+    document.querySelector('#bottom-nav').hidden = false;
+  } catch (error) {
+    if (current !== loadSequence || error.name === 'AbortError') return;
+    status.textContent = `原文暂时无法载入：${error.message}。请选择其他篇目或刷新重试。`;
+  } finally {
+    if (current === loadSequence) article.removeAttribute('aria-busy');
+  }
+}
+
+function navigate(number) {
+  history.pushState(null, '', messageUrl(number));
+  window.scrollTo(0, 0);
+  loadArticle(number);
+}
+selector.addEventListener('change', () => navigate(Number(selector.value)));
+for (const nav of document.querySelectorAll('.message-nav, .bottom-nav')) {
+  nav.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    event.preventDefault();
+    navigate(Number(new URL(link.href).searchParams.get('message')));
+  });
+}
+function selectedMessage() {
+  const value = new URL(location.href).searchParams.get('message') ?? '4';
+  const number = Number(value);
+  return /^\d+$/.test(value) && messages.some(item => item.number === number) ? number : null;
+}
+function loadSelectedMessage() {
+  const number = selectedMessage();
+  if (number !== null) loadArticle(number);
+  else {
+    articleRequest?.abort();
+    loadSequence++;
+    hide();
+    document.querySelector('#article').replaceChildren();
+    document.querySelector('#bottom-nav').hidden = true;
+    selector.value = '';
+    for (const id of ['previous', 'next']) {
+      const link = document.querySelector(`#${id}`);
+      link.removeAttribute('href');
+      link.setAttribute('aria-disabled', 'true');
+    }
+    status.textContent = '篇目不存在，请从目录中选择。';
+  }
+}
+window.addEventListener('popstate', loadSelectedMessage);
+try {
+  const response = await fetch('/api/messages');
+  if (!response.ok) throw new Error('目录载入失败');
+  messages = await response.json();
+  selector.replaceChildren(...messages.map(item => {
+    const option = document.createElement('option');
+    option.value = item.number;
+    option.textContent = item.title;
+    return option;
+  }));
+  selector.disabled = false;
+  loadSelectedMessage();
 } catch (error) {
-  document.querySelector('#status').textContent = `原文暂时无法载入：${error.message}`;
-  document.querySelector('#example').hidden = false;
-  enhance(document.querySelector('#example-text'));
+  status.textContent = `目录暂时无法载入：${error.message}。请刷新重试。`;
 }

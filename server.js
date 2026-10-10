@@ -6,7 +6,8 @@ import { lookupVerses as recoveryLookup } from './src/recovery.js';
 import { BOOKS } from './src/references.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const source = 'https://simplified.lsmchinese.org/lifestudy/ot/gen004.html';
+const messages = JSON.parse(await readFile(new URL('./src/genesis.json', import.meta.url), 'utf8'));
+const articleCache = new Map();
 const files = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['public/app.js', 'text/javascript; charset=utf-8']],
@@ -14,7 +15,9 @@ const files = new Map([
   ['/references.js', ['src/references.js', 'text/javascript; charset=utf-8']],
 ]);
 
-export function createServer({ fetchArticle = async () => {
+export function createServer({ fetchArticle = async (message) => {
+  if (articleCache.has(message)) return articleCache.get(message);
+  const source = `https://simplified.lsmchinese.org/lifestudy/ot/gen${String(message).padStart(3, '0')}.html`;
   const response = await fetch(source, { signal: AbortSignal.timeout(15000) });
   if (!response.ok) throw new Error(`Life-study website returned HTTP ${response.status}.`);
   const bytes = await response.arrayBuffer();
@@ -22,7 +25,9 @@ export function createServer({ fetchArticle = async () => {
   const prefix = new TextDecoder().decode(bytes.slice(0, 4096));
   const charset = /charset\s*=\s*["']?([\w-]+)/i.exec(contentType)?.[1]
     || /charset\s*=\s*["']?([\w-]+)/i.exec(prefix)?.[1] || 'utf-8';
-  return { html: new TextDecoder(charset).decode(bytes), source };
+  const result = { html: new TextDecoder(charset).decode(bytes), source };
+  articleCache.set(message, result);
+  return result;
 }, lookupVerses = recoveryLookup } = {}) {
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, 'http://localhost');
@@ -32,7 +37,15 @@ export function createServer({ fetchArticle = async () => {
     };
     if (request.method !== 'GET') return json(405, { error: 'Method not allowed.' });
     try {
-      if (url.pathname === '/api/article') return json(200, await fetchArticle());
+      if (url.pathname === '/api/messages') return json(200, messages);
+      if (url.pathname === '/api/article') {
+        const value = url.searchParams.get('message') ?? '4';
+        const message = Number(value);
+        if (!/^\d+$/.test(value) || !messages.some(item => item.number === message)) {
+          return json(400, { error: '篇目不存在，请从目录中选择。' });
+        }
+        return json(200, await fetchArticle(message));
+      }
       if (url.pathname === '/api/verses') {
         const book = url.searchParams.get('book');
         const chapter = Number(url.searchParams.get('chapter'));

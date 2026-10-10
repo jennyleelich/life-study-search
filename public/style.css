@@ -15,6 +15,14 @@ article, #example { font-family: serif; font-size: 19px; line-height: 2.1; }
 article { white-space: pre-line; }
 article p { line-height: 1.5; }
 article:empty { display: none; }
+.message-nav { display: flex; align-items: center; gap: 16px; margin-top: 30px; font-size: 14px; }
+.message-nav > a { white-space: nowrap; }
+[aria-disabled="true"] { color: #92998c; pointer-events: none; text-decoration: none; }
+.message-picker { flex: 1; min-width: 0; }
+.message-picker label { display: block; margin-bottom: 6px; font-size: 12px; color: #748074; }
+.message-picker select { width: 100%; padding: 10px; border: 1px solid #cdd6c5; border-radius: 5px; color: #283c36; background: #fffef9; font: inherit; }
+.bottom-nav { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #dedfd4; padding-top: 24px; margin-top: 30px; font-size: 14px; }
+@media(max-width: 550px) { .message-nav { flex-wrap: wrap; justify-content: space-between; } .message-picker { order: -1; flex-basis: 100%; } }
 .example-label { font-family: system-ui, sans-serif; font-size: 12px; color: #808675; }
 .reference { font: inherit; color: #346b53; background: #e5ecdd; border: 0; border-bottom: 1px dashed #77927c; border-radius: 3px; cursor: pointer; padding: 0 3px; text-decoration: none; }
 .reference:hover, .reference:focus-visible { background: #d1dfc4; outline: 2px solid #77927c; outline-offset: 2px; }
