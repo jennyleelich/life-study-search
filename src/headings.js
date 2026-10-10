@@ -6,6 +6,8 @@ export function headingLevel(text) {
   if (/^[一二三四五六七八九十百]+[\s、.]+\S/u.test(line)) return 1;
   if (/^\d+[\s、.]+\S/u.test(line)) return 2;
   if (/^[a-zA-Z][\s、.]*[\u3400-\u9fff]/u.test(line)) return 3;
-  if (/^\([一二三四五六七八九十百零〇○壹贰叁肆伍陆柒捌玖拾\d]+\)\s*\S/u.test(line)) return 4;
+  if (/^\([一二三四五六七八九十百零〇○壹贰叁肆伍陆柒捌玖拾]+\)\s*\S/u.test(line)) return 4;
+  if (/^\(\d+\)(?:\s*\S.*)?$/u.test(line)) return 5;
+  if (/^\([a-zA-Z]\)(?:\s*\S.*)?$/u.test(line)) return 6;
   return null;
 }

@@ -15,3 +15,12 @@ test('does not classify prose, Bible references or blank lines as headings', () 
   for (const text of ['', '\n', '一切生命都来自基督。', '（创七17～24。）',
     '这是一段普通文字', 'a normal English sentence']) assert.equal(headingLevel(text), null);
 });
+
+test('supports numeric and letter subheadings below parenthesized Chinese headings', () => {
+  for (const [text, level] of [
+    ['（一）起初', 4], ['（1）开导开导开导反对', 5], ['（a）', 6], ['（b）', 6],
+    ['（2）对方的', 5], ['（二）神创造', 4], ['（三）创造证明神的存在', 4],
+    ['（１）子级', 5], ['（ａ）下一级', 6], ['(12) Subsection', 5], ['(A)', 6],
+  ]) assert.equal(headingLevel(text), level, text);
+  assert.equal(headingLevel('（ab）'), null);
+});
