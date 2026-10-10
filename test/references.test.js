@@ -49,3 +49,20 @@ test('inherits omitted books and updates the chapter for subsequent citations', 
   assert.equal(decodeURIComponent(recoverySearchUrl(references[1])), 'https://www.recoveryversion.com.tw/ref/啟二十二5');
   assert.equal(findReferences('启二一25下。二二5。').length, 1);
 });
+
+test('links fullwidth hyphen ranges and all following verse citations', () => {
+  const text = '（利二三2，5－6，15－16，24，27，34，39，41。）';
+  const references = findReferences(text);
+  assert.deepEqual(references.map(r => [r.text, r.chapter, r.startVerse, r.endVerse]), [
+    ['利二三2', 23, 2, 2], ['5－6', 23, 5, 6], ['15－16', 23, 15, 16],
+    ['24', 23, 24, 24], ['27', 23, 27, 27], ['34', 23, 34, 34],
+    ['39', 23, 39, 39], ['41', 23, 41, 41],
+  ]);
+  for (const reference of references) {
+    assert.equal(reference.book, 'Leviticus');
+    assert.equal(text.slice(reference.index, reference.index + reference.text.length), reference.text);
+  }
+  assert.equal(decodeURIComponent(recoverySearchUrl(references[1])), 'https://www.recoveryversion.com.tw/ref/利二十三5～6');
+  assert.equal(decodeURIComponent(recoverySearchUrl(references[2])), 'https://www.recoveryversion.com.tw/ref/利二十三15～16');
+  assert.equal(findReferences('利二三5－6')[0].endVerse, 6);
+});

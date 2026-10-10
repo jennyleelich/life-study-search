@@ -49,7 +49,7 @@ export function chineseNumber(text) {
 }
 
 const names = [...aliases.keys()].sort((a, b) => b.length - a.length).join('|');
-const pattern = `(${names})([零〇○一二三四五六七八九十百]+|\\d+:)(\\d+)(?:[～~—–-](\\d+))?`;
+const pattern = `(${names})([零〇○一二三四五六七八九十百]+|\\d+:)(\\d+)(?:[～~－—–-](\\d+))?`;
 
 export function findReferences(text) {
   const results = [];
@@ -63,10 +63,10 @@ export function findReferences(text) {
     const remainder = text.slice(match.index + match[0].length);
     // A following citation may omit its book, or both its book and chapter.
     // 上/中/下 describe part of the preceding verse and remain ordinary text.
-    const continuation = /^(?:[上中下]?[，、,]\s*(?:[零〇○一二三四五六七八九十百]+|\d+:)?\d+(?:[～~—–-]\d+)?)+/u.exec(remainder);
+    const continuation = /^(?:[上中下]?[，、,]\s*(?:[零〇○一二三四五六七八九十百]+|\d+:)?\d+(?:[～~－—–-]\d+)?)+/u.exec(remainder);
     if (continuation) {
       let inheritedChapter = chapter;
-      for (const extra of continuation[0].matchAll(/[上中下]?[，、,]\s*(([零〇○一二三四五六七八九十百]+|\d+:)?(\d+)(?:[～~—–-](\d+))?)/gu)) {
+      for (const extra of continuation[0].matchAll(/[上中下]?[，、,]\s*(([零〇○一二三四五六七八九十百]+|\d+:)?(\d+)(?:[～~－—–-](\d+))?)/gu)) {
         if (extra[2]) inheritedChapter = chineseNumber(extra[2].replace(':', ''));
         const first = Number(extra[3]);
         const last = Number(extra[4] || extra[3]);
