@@ -15,16 +15,18 @@
   </aside>
   <main>
     <div class="eyebrow" id="book-label">生命读经</div>
+    <div class="reader-toolbar">
     <div class="book-picker"><label for="book-select">选择书卷</label><select id="book-select" disabled><option>正在载入书卷…</option></select></div>
     <nav class="message-nav" aria-label="篇目导航">
-      <a id="previous" aria-disabled="true">← 上一篇</a>
+      <a id="previous" aria-label="上一篇" title="上一篇" aria-disabled="true">←</a>
       <div class="message-picker">
         <label for="message-select">选择篇目</label>
         <select id="message-select" disabled><option>正在载入篇目…</option></select>
-        <a id="message-index" href="/">全部篇目索引</a>
       </div>
-      <a id="next" aria-disabled="true">下一篇 →</a>
+      <a id="next" aria-label="下一篇" title="下一篇" aria-disabled="true">→</a>
+      <a id="message-index" href="/" aria-label="全部篇目索引">索引</a>
     </nav>
+    </div>
     <h1 id="status" aria-live="polite">正在载入书卷目录…</h1>
     <nav id="message-catalog" aria-label="全部篇目索引" hidden><p id="catalog-description"></p><ol id="message-list"></ol></nav>
     <article id="article" aria-label="生命读经内容"></article>

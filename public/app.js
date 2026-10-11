@@ -403,7 +403,7 @@ bookSelector.addEventListener('change', () => {
   document.querySelector('.message-nav').hidden = false;
   // Keep the current article and URL until a message is selected.
   // Previous/next must not accidentally navigate using the newly selected book.
-  for (const link of document.querySelectorAll('.message-nav > a, .bottom-nav > a')) {
+  for (const link of document.querySelectorAll('.message-nav > a:not(#message-index), .bottom-nav > a')) {
     link.removeAttribute('href');
     link.setAttribute('aria-disabled', 'true');
   }
