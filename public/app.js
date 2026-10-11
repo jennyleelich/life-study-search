@@ -239,6 +239,7 @@ function updateNavigation(number) {
 }
 
 async function loadArticle(number) {
+  document.querySelector('#book-label').textContent = `${currentBook.testament} · ${currentBook.name}生命读经`;
   articleRequest?.abort();
   articleRequest = new AbortController();
   const current = ++loadSequence;
@@ -286,7 +287,7 @@ function navigate(number) {
   window.scrollTo(0, 0);
   loadArticle(number);
 }
-selector.addEventListener('change', () => navigate(Number(selector.value)));
+selector.addEventListener('change', () => { if (selector.value) navigate(Number(selector.value)); });
 function showIndex() {
   articleRequest?.abort();
   loadSequence++;
@@ -388,9 +389,34 @@ function updateBook() {
   }));
 }
 bookSelector.addEventListener('change', () => {
-  history.pushState(null, '', `/?book=${bookSelector.value}`);
-  window.scrollTo(0, 0);
-  loadSelectedMessage();
+  articleRequest?.abort();
+  loadSequence++;
+  currentBook = books.find(item => item.id === bookSelector.value);
+  const label = document.querySelector('#book-label').textContent;
+  updateBook();
+  const placeholder = document.createElement('option');
+  placeholder.value = '';
+  placeholder.textContent = `请选择${currentBook.name}的篇目`;
+  placeholder.disabled = true;
+  placeholder.selected = true;
+  selector.prepend(placeholder);
+  document.querySelector('.message-nav').hidden = false;
+  // Keep the current article and URL until a message is selected.
+  // Previous/next must not accidentally navigate using the newly selected book.
+  for (const link of document.querySelectorAll('.message-nav > a, .bottom-nav > a')) {
+    link.removeAttribute('href');
+    link.setAttribute('aria-disabled', 'true');
+  }
+  if (!catalog.hidden) {
+    status.textContent = `${currentBook.name}生命读经 · 全部篇目`;
+    document.title = `${currentBook.name}生命读经 · 篇目索引`;
+    document.querySelector('#original').href = currentBook.indexSource;
+  } else if (document.querySelector('#article').textContent.trim()) {
+    document.querySelector('#book-label').textContent = label;
+  } else {
+    status.textContent = `请选择${currentBook.name}的篇目开始阅读。`;
+  }
+  document.querySelector('#article').removeAttribute('aria-busy');
 });
 window.addEventListener('popstate', loadSelectedMessage);
 try {
