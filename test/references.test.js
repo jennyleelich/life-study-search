@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chineseNumber, findReferences, recoverySearchUrl } from '../src/references.js';
+import { chineseNumber, findReferences, recoverySearchUrl, defaultStudyBook } from '../src/references.js';
 
 test('extracts the requested citation and its exact location in prose', () => {
   const text = '人类堕落后，在挪亚的时代里，地再度被死水淹埋。（创七17～24。）';
@@ -77,4 +77,20 @@ test('recognizes lowercase l typos while preserving the original citation text',
   assert.deepEqual(references.map(r => [r.text, r.startVerse, r.endVerse]), [['创一l8－l9', 18, 19], ['l7', 17, 17]]);
   for (const ref of references) assert.equal(rangeText.slice(ref.index, ref.index + ref.text.length), ref.text);
   assert.deepEqual(findReferences('普通文字 l8 library'), []);
+});
+
+test('uses the current study book for chapter citations inside parentheses', () => {
+  const text = '（一13～15。） （ 二二5，7－9。） （创七17～24。） （一）起初';
+  const refs = findReferences(text, 'Revelation');
+  assert.deepEqual(refs.map(r => [r.text, r.book, r.chapter, r.startVerse, r.endVerse]), [
+    ['一13～15', 'Revelation', 1, 13, 15], ['二二5', 'Revelation', 22, 5, 5],
+    ['7－9', 'Revelation', 22, 7, 9], ['创七17～24', 'Genesis', 7, 17, 24],
+  ]);
+  for (const ref of refs) assert.equal(text.slice(ref.index, ref.index + ref.text.length), ref.text);
+  assert.deepEqual(findReferences('（一13～15。）'), []);
+  assert.deepEqual(findReferences('普通文字一13～15', 'Genesis'), []);
+  assert.equal(defaultStudyBook('gen'), 'Genesis');
+  assert.equal(defaultStudyBook('rev'), 'Revelation');
+  assert.equal(defaultStudyBook('sam', '读经：撒母耳记下七章。'), '2 Samuel');
+  assert.equal(defaultStudyBook('sam'), null);
 });

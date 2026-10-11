@@ -1,4 +1,4 @@
-import { findReferences, recoverySearchUrl } from '/references.js';
+import { findReferences, recoverySearchUrl, defaultStudyBook } from '/references.js';
 import { headingLevel } from '/headings.js';
 
 const card = document.querySelector('#verse-card');
@@ -81,13 +81,13 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape') hide
 window.addEventListener('resize', hide);
 window.addEventListener('scroll', () => { if (active && !card.hidden) placeCard(active); updateSectionHighlight(); }, { passive: true });
 
-function enhance(container) {
+function enhance(container, defaultBook = null) {
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
   const nodes = [];
   while (walker.nextNode()) nodes.push(walker.currentNode);
   for (const node of nodes) {
     if (node.parentElement.closest('a, button')) continue;
-    const references = findReferences(node.textContent);
+    const references = findReferences(node.textContent, defaultBook);
     if (!references.length) continue;
     const fragment = document.createDocumentFragment();
     let offset = 0;
@@ -267,7 +267,7 @@ async function loadArticle(number) {
     if (!body?.textContent.trim()) throw new Error('来源页面没有可读取的文章内容。');
     copyContent(body, article);
     buildSections(article);
-    enhance(article);
+    enhance(article, defaultStudyBook(currentBook.id, body.textContent));
     const title = source.querySelector('.msg-title')?.textContent || messages.find(item => item.number === number).title;
     status.textContent = title;
     document.title = `${title} · 生命读经`;

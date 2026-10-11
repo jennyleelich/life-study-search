@@ -51,7 +51,7 @@ export function chineseNumber(text) {
 const names = [...aliases.keys()].sort((a, b) => b.length - a.length).join('|');
 const pattern = `(${names})([零〇○一二三四五六七八九十百]+|\\d+:)(\\d+)(?:[～~－—–-](\\d+))?`;
 
-export function findReferences(text) {
+export function findReferences(text, defaultBook = null) {
   const results = [];
   // Some source citations contain a lowercase l in place of 1 (e.g. 创一l8).
   // Normalize only for matching; equal-length substitution preserves text offsets.
@@ -80,7 +80,35 @@ export function findReferences(text) {
       }
     }
   }
-  return results;
+  const defaultEntry = BOOKS.find(entry => entry[2] === defaultBook);
+  if (defaultEntry) {
+    for (const parenthesis of text.matchAll(/[（(]([^（）()\r\n]+)[）)]/gu)) {
+      const inner = parenthesis[1];
+      const leading = /^\s*(?=(?:[零〇○一二三四五六七八九十百]+|\d+:)[\dl])/u.exec(inner);
+      if (!leading) continue;
+      const start = parenthesis.index + 1 + leading[0].length;
+      const alias = defaultEntry[0];
+      const citation = inner.slice(leading[0].length);
+      for (const ref of findReferences(alias + citation)) {
+        const index = start + Math.max(0, ref.index - alias.length);
+        if (results.some(existing => existing.index === index)) continue;
+        const length = ref.text.length - (ref.index === 0 ? alias.length : 0);
+        results.push({ ...ref, index, text: text.slice(index, index + length) });
+      }
+    }
+  }
+  return results.sort((a, b) => a.index - b.index);
+}
+
+const studyCodes = 'gen exo lev num deu jos jud ruth sam sam king king chr chr ezr neh est job psa pro ecc song isa jer lam eze dan hos joe amos oba jona mich nahu haba zeph hag zech mala matt mark luke john acts roma 1cor 2cor gal ephi phil col 1the 2the 1tim 2tim titu phmn hebr jame 1pet 2pet 1joh 2joh 3joh juda rev'.split(' ');
+
+export function defaultStudyBook(id, articleText = '') {
+  const candidates = BOOKS.filter((entry, index) => studyCodes[index] === id);
+  if (candidates.length === 1) return candidates[0][2];
+  const reading = /读经\s*[:：]\s*([^\r\n]+)/u.exec(articleText)?.[1] || '';
+  const names = { sam: ['撒母耳记上', '撒母耳记下'], king: ['列王纪上', '列王纪下'], chr: ['历代志上', '历代志下'] };
+  const matching = candidates.filter((entry, index) => reading.startsWith(names[id]?.[index] || '\0') || reading.startsWith(entry[0]) || reading.startsWith(entry[1]));
+  return matching.length === 1 ? matching[0][2] : null;
 }
 
 function chapterChinese(value) {
