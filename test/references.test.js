@@ -94,3 +94,19 @@ test('uses the current study book for chapter citations inside parentheses', () 
   assert.equal(defaultStudyBook('sam', '读经：撒母耳记下七章。'), '2 Samuel');
   assert.equal(defaultStudyBook('sam'), null);
 });
+
+test('includes verse ranges with spaces around their separators', () => {
+  for (const text of ['腓二6 ～8。', '腓二6 ～ 8。', '腓二6　～　8。', '腓二6\u00a0－\u00a08。']) {
+    const refs = findReferences(text);
+    assert.equal(refs.length, 1);
+    assert.equal(refs[0].startVerse, 6);
+    assert.equal(refs[0].endVerse, 8);
+    assert.equal(refs[0].text, text.slice(0, -1));
+    assert.equal(decodeURIComponent(recoverySearchUrl(refs[0])), 'https://www.recoveryversion.com.tw/ref/腓二6～8');
+  }
+  const text = '腓二5，6 ～ 8，12－ 13。';
+  const refs = findReferences(text);
+  assert.deepEqual(refs.map(ref => [ref.startVerse, ref.endVerse]), [[5, 5], [6, 8], [12, 13]]);
+  for (const ref of refs) assert.equal(text.slice(ref.index, ref.index + ref.text.length), ref.text);
+  assert.equal(findReferences('（二6 ～ 8。）', 'Philippians')[0].endVerse, 8);
+});
