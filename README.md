@@ -8,7 +8,7 @@ npm start
 npm test
 ```
 
-The server listens on port 3000 (`PORT` can override it). `npm start` enables Node's environment proxy support for cloud networking. On Windows, run `node server.js` directly. It loads the selected Life-study page on the server, avoiding browser cross-origin restrictions. Source markup is reduced to text and permitted formatting before display. Hover or keyboard focus opens a card with simplified Chinese Recovery Version verses. Clicking a reference opens the Recovery Version site's reference-result page in a new tab, independently of whether the hover request succeeds. Escape closes the card.
+The server listens on port 3000 (`PORT` can override it). `npm start` enables Node's environment proxy support for cloud networking. `npm start` works in Windows Command Prompt, PowerShell, macOS, and Linux without shell-specific environment assignments. It loads the selected Life-study page on the server, avoiding browser cross-origin restrictions. Source markup is reduced to text and permitted formatting before display. Hover or keyboard focus opens a card with simplified Chinese Recovery Version verses. Clicking a reference opens the Recovery Version site's reference-result page in a new tab, independently of whether the hover request succeeds. Escape closes the card.
 
 ## Sources and behavior
 

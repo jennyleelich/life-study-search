@@ -2,6 +2,6 @@
   "name": "life-study-search",
   "private": true,
   "type": "module",
-  "scripts": { "start": "NODE_USE_ENV_PROXY=1 node server.js", "test": "node --test" },
+  "scripts": { "start": "node scripts/start.js", "test": "node --test" },
   "engines": { "node": ">=24" }
 }
