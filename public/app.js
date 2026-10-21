@@ -239,6 +239,8 @@ function updateNavigation(number) {
 }
 
 async function loadArticle(number) {
+  status.classList.remove('load-error');
+  document.querySelector('#retry-article').hidden = true;
   document.querySelector('#book-label').textContent = `${currentBook.testament} · ${currentBook.name}生命读经`;
   articleRequest?.abort();
   articleRequest = new AbortController();
@@ -276,6 +278,8 @@ async function loadArticle(number) {
     if (target) target.heading.scrollIntoView({ block: 'start' });
   } catch (error) {
     if (current !== loadSequence || error.name === 'AbortError') return;
+    status.classList.add('load-error');
+    document.querySelector('#retry-article').hidden = false;
     status.textContent = `原文暂时无法载入：${error.message}。请选择其他篇目或刷新重试。`;
   } finally {
     if (current === loadSequence) article.removeAttribute('aria-busy');
@@ -289,6 +293,8 @@ function navigate(number) {
 }
 selector.addEventListener('change', () => { if (selector.value) navigate(Number(selector.value)); });
 function showIndex() {
+  status.classList.remove('load-error');
+  document.querySelector('#retry-article').hidden = true;
   articleRequest?.abort();
   loadSequence++;
   hide();
@@ -419,6 +425,7 @@ bookSelector.addEventListener('change', () => {
   document.querySelector('#article').removeAttribute('aria-busy');
 });
 window.addEventListener('popstate', loadSelectedMessage);
+document.querySelector('#retry-article').addEventListener('click', loadSelectedMessage);
 try {
   const response = await fetch('/api/books');
   if (!response.ok) throw new Error('书卷目录载入失败');

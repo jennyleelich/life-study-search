@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { lookupVerses as recoveryLookup } from './src/recovery.js';
 import { BOOKS } from './src/references.js';
+import { networkErrorMessage } from './src/network-errors.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const books = JSON.parse(await readFile(new URL('./src/books.json', import.meta.url), 'utf8'));
@@ -75,7 +76,7 @@ export function createServer({ fetchArticle = async (message, bookId, source) =>
         'X-Content-Type-Options': 'nosniff' });
       response.end(await readFile(resolve(root, file[0])));
     } catch (error) {
-      json(502, { error: error.message });
+      json(502, { error: networkErrorMessage(error) });
     }
   });
 }
