@@ -21,7 +21,12 @@ export function createServer({ fetchArticle = async (message, bookId, source) =>
   const cacheKey = `${bookId}:${message}`;
   if (articleCache.has(cacheKey)) return articleCache.get(cacheKey);
   const response = await fetch(source, { signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error(`Life-study website returned HTTP ${response.status}.`);
+  if (!response.ok) {
+    const message = response.status >= 500
+      ? `原文网站暂时不可用（HTTP ${response.status}），请稍后重试，或点击“阅读原文”检查来源网站。`
+      : `原文网站返回 HTTP ${response.status}。请点击“阅读原文”检查来源页面。`;
+    throw Object.assign(new Error(message), { upstreamStatus: response.status });
+  }
   const bytes = await response.arrayBuffer();
   const contentType = response.headers.get('content-type') || '';
   const prefix = new TextDecoder().decode(bytes.slice(0, 4096));
@@ -76,7 +81,8 @@ export function createServer({ fetchArticle = async (message, bookId, source) =>
         'X-Content-Type-Options': 'nosniff' });
       response.end(await readFile(resolve(root, file[0])));
     } catch (error) {
-      json(502, { error: networkErrorMessage(error) });
+      json(502, { error: networkErrorMessage(error),
+        ...(Number.isInteger(error.upstreamStatus) ? { upstreamStatus: error.upstreamStatus } : {}) });
     }
   });
 }

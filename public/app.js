@@ -264,7 +264,11 @@ async function loadArticle(number) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '原文载入失败。');
     if (current !== loadSequence) return;
-    const source = new DOMParser().parseFromString(data.html, 'text/html');
+    // A template keeps the source's styles and resources inert until we copy
+    // only the permitted text and formatting into the reader.
+    const template = document.createElement('template');
+    template.innerHTML = data.html;
+    const source = template.content;
     const body = source.querySelector('.ls-text, article, main');
     if (!body?.textContent.trim()) throw new Error('来源页面没有可读取的文章内容。');
     copyContent(body, article);

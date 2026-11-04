@@ -66,3 +66,12 @@ test('reports missing provider and source failures without fabricating verses', 
   assert.equal(response.status, 502);
   assert.equal((await response.json()).error, 'Source blocked');
 });
+
+test('distinguishes upstream service failures from the local gateway status', async t => {
+  const base = await runServer(t, { fetchArticle: async () => {
+    throw Object.assign(new Error('Source temporarily unavailable'), { upstreamStatus: 503 });
+  } });
+  const response = await fetch(`${base}/api/article?book=mark&message=63`);
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: 'Source temporarily unavailable', upstreamStatus: 503 });
+});
