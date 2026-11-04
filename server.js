@@ -77,7 +77,7 @@ export function createServer({ fetchArticle = async (message, bookId, source) =>
       const file = files.get(url.pathname);
       if (!file) return json(404, { error: 'Not found.' });
       response.writeHead(200, { 'Content-Type': file[1],
-        'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; object-src 'none'",
+        'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; connect-src 'self'; base-uri 'none'; object-src 'none'",
         'X-Content-Type-Options': 'nosniff' });
       response.end(await readFile(resolve(root, file[0])));
     } catch (error) {
