@@ -23,7 +23,7 @@ test('covers Genesis 1–4 exactly once and cites only reviewed messages', () =>
 test('inserts a separate study after message 25 without renumbering original messages', () => {
   const original = [{ id: 'gen', messages: [24, 25, 26].map(number => ({ number })) }];
   const updated = withGenesisStudy(original);
-  assert.deepEqual(updated[0].messages.map(item => item.number), [24, 25, 1001, 26]);
+  assert.deepEqual(updated[0].messages.map(item => item.number), [24, 25, 1001, 1002, 26]);
   assert.equal(original[0].messages.length, 3);
 });
 

@@ -116,7 +116,7 @@ function enhance(container, defaultBook = null) {
 
 // Copy only inert text and a small set of formatting elements from the source.
 function copyContent(source, destination, allowStudyLinks = false) {
-  const allowed = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'H1', 'H2', 'H3', 'H4', 'BR', 'B', 'STRONG', 'EM', 'I', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'TABLE', 'TBODY', 'TR', 'TD']);
+  const allowed = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'H1', 'H2', 'H3', 'H4', 'BR', 'B', 'STRONG', 'EM', 'I', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'CAPTION', 'TR', 'TH', 'TD']);
   const excluded = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'NAV', 'HEADER', 'FOOTER', 'FORM', 'NOSCRIPT', 'SVG']);
   for (const node of source.childNodes) {
     if (node.nodeType === Node.TEXT_NODE) destination.append(document.createTextNode(node.textContent));
@@ -258,7 +258,7 @@ async function loadArticle(number) {
   document.querySelector('#bottom-nav').hidden = true;
   article.setAttribute('aria-busy', 'true');
   const selected = messages.find(item => item.number === number);
-  status.textContent = selected.kind === 'study' ? '正在载入专题整理与完整经文…' : `正在载入第 ${number} 篇…`;
+  status.textContent = selected.kind === 'study' ? '正在载入专题整理…' : `正在载入第 ${number} 篇…`;
   updateNavigation(number);
   const original = document.querySelector('#original');
   original.href = selected.source;

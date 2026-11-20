@@ -6,6 +6,7 @@ import { lookupVerses as recoveryLookup } from './src/recovery.js';
 import { BOOKS } from './src/references.js';
 import { networkErrorMessage } from './src/network-errors.js';
 import { withGenesisStudy, renderGenesisStudy } from './src/genesis-seeds.js';
+import { seedInventoryMessage, renderSeedInventory } from './src/genesis-seed-inventory.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const books = withGenesisStudy(JSON.parse(await readFile(new URL('./src/books.json', import.meta.url), 'utf8')));
@@ -59,7 +60,8 @@ export function createServer({ fetchArticle = async (message, bookId, source) =>
           return json(400, { error: '篇目不存在，请从目录中选择。' });
         }
         const selected = messages.find(item => item.number === message);
-        if (selected.kind === 'study') return json(200, await renderGenesisStudy(lookupVerses));
+        if (selected.kind === 'study') return json(200, selected.number === seedInventoryMessage.number
+          ? renderSeedInventory() : await renderGenesisStudy(lookupVerses));
         return json(200, await fetchArticle(message, bookId, selected.source));
       }
       if (url.pathname === '/api/verses') {

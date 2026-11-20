@@ -41,6 +41,10 @@ article:empty { display: none; }
 .study-article p { line-height: 1.9; }
 .study-article blockquote { margin: 16px 0; padding: 4px 20px; border-left: 3px solid #98ae8c; background: #edf0e5; border-radius: 0 6px 6px 0; }
 .study-article blockquote p { font-size: 17px; }
+.study-article table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 15px; }
+.study-article th, .study-article td { border: 1px solid #d3dac9; padding: 10px 12px; vertical-align: top; line-height: 1.8; }
+.study-article th { background: #edf0e5; text-align: left; }
+.study-article td:first-child { white-space: nowrap; }
 .message-nav { display: flex; flex: 1; min-width: 0; align-items: center; gap: 8px; margin: 0; font-size: inherit; }
 .message-nav > a { white-space: nowrap; }
 .message-nav > a:not(#message-index) { display: inline-flex; justify-content: center; align-items: center; width: 28px; height: 36px; flex: 0 0 auto; text-decoration: none; font-size: 18px; }

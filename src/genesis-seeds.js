@@ -1,4 +1,5 @@
 import { lookupVerses } from './recovery.js';
+import { seedInventoryMessage } from './genesis-seed-inventory.js';
 
 export const studyMessage = {
   number: 1001, kind: 'study',
@@ -51,7 +52,7 @@ export const chapters = [
 
 export function withGenesisStudy(catalog) {
   return catalog.map(book => book.id !== 'gen' ? book : { ...book,
-    messages: book.messages.flatMap(message => message.number === 25 ? [message, studyMessage] : [message]),
+    messages: book.messages.flatMap(message => message.number === 25 ? [message, studyMessage, seedInventoryMessage] : [message]),
   });
 }
 

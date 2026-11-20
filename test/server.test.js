@@ -21,9 +21,9 @@ test('serves the page and article through the same origin', async t => {
 test('lists all Genesis messages and validates article selection', async t => {
   const base = await runServer(t, { fetchArticle: async number => ({ number }) });
   const messages = await (await fetch(`${base}/api/messages`)).json();
-  assert.equal(messages.length, 121);
+  assert.equal(messages.length, 122);
   assert.deepEqual(messages.filter(item => !item.kind).map(item => item.number), Array.from({ length: 120 }, (_, index) => index + 1));
-  assert.deepEqual(messages.slice(24, 27).map(item => item.number), [25, 1001, 26]);
+  assert.deepEqual(messages.slice(24, 28).map(item => item.number), [25, 1001, 1002, 26]);
   for (const number of [1, 4, 120]) {
     assert.deepEqual(await (await fetch(`${base}/api/article?message=${number}`)).json(), { number });
   }
