@@ -35,6 +35,12 @@ article, #example { font-family: serif; font-size: 19px; line-height: 2.1; }
 article { white-space: pre-line; }
 article p { line-height: 1.5; }
 article:empty { display: none; }
+.study-article { white-space: normal; }
+.study-article h2 { margin: 40px 0 18px; font-size: 24px; line-height: 1.6; }
+.study-article h3 { margin: 30px 0 12px; font-size: 20px; line-height: 1.6; }
+.study-article p { line-height: 1.9; }
+.study-article blockquote { margin: 16px 0; padding: 4px 20px; border-left: 3px solid #98ae8c; background: #edf0e5; border-radius: 0 6px 6px 0; }
+.study-article blockquote p { font-size: 17px; }
 .message-nav { display: flex; flex: 1; min-width: 0; align-items: center; gap: 8px; margin: 0; font-size: inherit; }
 .message-nav > a { white-space: nowrap; }
 .message-nav > a:not(#message-index) { display: inline-flex; justify-content: center; align-items: center; width: 28px; height: 36px; flex: 0 0 auto; text-decoration: none; font-size: 18px; }

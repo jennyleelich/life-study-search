@@ -5,9 +5,10 @@ import { resolve } from 'node:path';
 import { lookupVerses as recoveryLookup } from './src/recovery.js';
 import { BOOKS } from './src/references.js';
 import { networkErrorMessage } from './src/network-errors.js';
+import { withGenesisStudy, renderGenesisStudy } from './src/genesis-seeds.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const books = JSON.parse(await readFile(new URL('./src/books.json', import.meta.url), 'utf8'));
+const books = withGenesisStudy(JSON.parse(await readFile(new URL('./src/books.json', import.meta.url), 'utf8')));
 const articleCache = new Map();
 const files = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
@@ -57,7 +58,9 @@ export function createServer({ fetchArticle = async (message, bookId, source) =>
         if (!/^\d+$/.test(value) || !messages.some(item => item.number === message)) {
           return json(400, { error: '篇目不存在，请从目录中选择。' });
         }
-        return json(200, await fetchArticle(message, bookId, messages.find(item => item.number === message).source));
+        const selected = messages.find(item => item.number === message);
+        if (selected.kind === 'study') return json(200, await renderGenesisStudy(lookupVerses));
+        return json(200, await fetchArticle(message, bookId, selected.source));
       }
       if (url.pathname === '/api/verses') {
         const book = url.searchParams.get('book');

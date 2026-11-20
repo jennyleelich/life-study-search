@@ -115,14 +115,16 @@ function enhance(container, defaultBook = null) {
 }
 
 // Copy only inert text and a small set of formatting elements from the source.
-function copyContent(source, destination) {
+function copyContent(source, destination, allowStudyLinks = false) {
   const allowed = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'H1', 'H2', 'H3', 'H4', 'BR', 'B', 'STRONG', 'EM', 'I', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'TABLE', 'TBODY', 'TR', 'TD']);
   const excluded = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'NAV', 'HEADER', 'FOOTER', 'FORM', 'NOSCRIPT', 'SVG']);
   for (const node of source.childNodes) {
     if (node.nodeType === Node.TEXT_NODE) destination.append(document.createTextNode(node.textContent));
     else if (node.nodeType === Node.ELEMENT_NODE && !excluded.has(node.tagName)) {
-      const target = allowed.has(node.tagName) ? document.createElement(node.tagName.toLowerCase()) : document.createDocumentFragment();
-      copyContent(node, target);
+      const isStudyLink = allowStudyLinks && node.tagName === 'A' && /^\/\?book=gen&message=\d+$/.test(node.getAttribute('href') || '');
+      const target = allowed.has(node.tagName) || isStudyLink ? document.createElement(node.tagName.toLowerCase()) : document.createDocumentFragment();
+      if (isStudyLink) target.setAttribute('href', node.getAttribute('href'));
+      copyContent(node, target, allowStudyLinks);
       destination.append(target);
     }
   }
@@ -255,10 +257,12 @@ async function loadArticle(number) {
   document.querySelector('#example').hidden = true;
   document.querySelector('#bottom-nav').hidden = true;
   article.setAttribute('aria-busy', 'true');
-  status.textContent = `正在载入第 ${number} 篇…`;
+  const selected = messages.find(item => item.number === number);
+  status.textContent = selected.kind === 'study' ? '正在载入专题整理与完整经文…' : `正在载入第 ${number} 篇…`;
   updateNavigation(number);
   const original = document.querySelector('#original');
-  original.href = messages.find(item => item.number === number).source;
+  original.href = selected.source;
+  original.textContent = selected.kind === 'study' ? '参考原篇目录 ↗' : '阅读原文 ↗';
   try {
     const response = await fetch(`/api/article?book=${currentBook.id}&message=${number}`, { signal: articleRequest.signal });
     const data = await response.json();
@@ -271,13 +275,18 @@ async function loadArticle(number) {
     const source = template.content;
     const body = source.querySelector('.ls-text, article, main');
     if (!body?.textContent.trim()) throw new Error('来源页面没有可读取的文章内容。');
-    copyContent(body, article);
+    article.classList.toggle('study-article', data.kind === 'study');
+    copyContent(body, article, data.kind === 'study');
     buildSections(article);
     enhance(article, defaultStudyBook(currentBook.id, body.textContent));
     const title = source.querySelector('.msg-title')?.textContent || messages.find(item => item.number === number).title;
     status.textContent = title;
     document.title = `${title} · 生命读经`;
     document.querySelector('#bottom-nav').hidden = false;
+    if (data.missingChapters?.length) {
+      document.querySelector('#retry-article').textContent = '重新载入经文';
+      document.querySelector('#retry-article').hidden = false;
+    } else document.querySelector('#retry-article').textContent = '重新载入原文';
     const target = sections.find(section => `#${section.heading.id}` === location.hash);
     if (target) target.heading.scrollIntoView({ block: 'start' });
   } catch (error) {
@@ -381,7 +390,9 @@ function updateBook() {
   bookSelector.value = currentBook.id;
   document.querySelector('#book-label').textContent = `${currentBook.testament} · ${currentBook.name}生命读经`;
   document.querySelector('#message-index').href = indexUrl();
-  document.querySelector('#catalog-description').textContent = `共 ${messages.length} 篇，点击篇目开始阅读。`;
+  const originals = messages.filter(item => item.kind !== 'study').length;
+  const studies = messages.length - originals;
+  document.querySelector('#catalog-description').textContent = `共 ${originals} 篇${studies ? `，另有 ${studies} 个专题整理` : ''}，点击篇目开始阅读。`;
   selector.replaceChildren(...messages.map(item => {
     const option = document.createElement('option');
     option.value = item.number;
@@ -440,7 +451,7 @@ try {
     for (const book of books.filter(item => item.testament === testament)) {
       const option = document.createElement('option');
       option.value = book.id;
-      option.textContent = `${book.name}（${book.messages.length}篇）`;
+      option.textContent = `${book.name}（${book.messages.filter(item => item.kind !== 'study').length}篇）`;
       group.append(option);
     }
     return group;

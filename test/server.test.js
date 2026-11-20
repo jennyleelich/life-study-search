@@ -21,8 +21,9 @@ test('serves the page and article through the same origin', async t => {
 test('lists all Genesis messages and validates article selection', async t => {
   const base = await runServer(t, { fetchArticle: async number => ({ number }) });
   const messages = await (await fetch(`${base}/api/messages`)).json();
-  assert.equal(messages.length, 120);
-  assert.deepEqual(messages.map(item => item.number), Array.from({ length: 120 }, (_, index) => index + 1));
+  assert.equal(messages.length, 121);
+  assert.deepEqual(messages.filter(item => !item.kind).map(item => item.number), Array.from({ length: 120 }, (_, index) => index + 1));
+  assert.deepEqual(messages.slice(24, 27).map(item => item.number), [25, 1001, 26]);
   for (const number of [1, 4, 120]) {
     assert.deepEqual(await (await fetch(`${base}/api/article?message=${number}`)).json(), { number });
   }
@@ -35,10 +36,11 @@ test('provides all book catalogs and uses actual source filenames for selected b
   const base = await runServer(t, { fetchArticle: async (number, book, source) => ({ number, book, source }) });
   const books = await (await fetch(`${base}/api/books`)).json();
   assert.equal(books.length, 63);
-  assert.equal(books.reduce((count, book) => count + book.messages.length, 0), 1983);
+  assert.equal(books.reduce((count, book) => count + book.messages.filter(item => !item.kind).length, 0), 1983);
   assert.equal(new Set(books.map(book => book.id)).size, books.length);
   for (const book of books) {
-    assert.deepEqual(book.messages.map(item => item.number), Array.from({ length: book.messages.length }, (_, i) => i + 1));
+    const originals = book.messages.filter(item => !item.kind);
+    assert.deepEqual(originals.map(item => item.number), Array.from({ length: originals.length }, (_, i) => i + 1));
     assert.ok(book.messages.every(item => item.source.startsWith('https://simplified.lsmchinese.org/lifestudy/')));
     const last = book.messages.at(-1);
     const result = await (await fetch(`${base}/api/article?book=${book.id}&message=${last.number}`)).json();
